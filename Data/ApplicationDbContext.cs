@@ -13,6 +13,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<SkillCategory> SkillCategories => Set<SkillCategory>();
     public DbSet<Skill> Skills => Set<Skill>();
+    public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<EmployeeSkill> EmployeeSkills => Set<EmployeeSkill>();
     public DbSet<Certification> Certifications => Set<Certification>();
     public DbSet<EmployeeCertification> EmployeeCertifications => Set<EmployeeCertification>();
@@ -21,41 +22,49 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(builder);
 
+        // SkillCategory -> Skills
         builder.Entity<SkillCategory>()
             .HasMany(x => x.Skills)
             .WithOne(x => x.SkillCategory)
             .HasForeignKey(x => x.SkillCategoryId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Employee -> EmployeeSkills
         builder.Entity<EmployeeSkill>()
             .HasOne(x => x.Employee)
-            .WithMany()
+            .WithMany(x => x.EmployeeSkills)
             .HasForeignKey(x => x.EmployeeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<EmployeeSkill>()
-            .Property(e => e.Score)
-            .HasPrecision(5, 2);    
-
+        // Skill -> EmployeeSkills
         builder.Entity<EmployeeSkill>()
             .HasOne(x => x.Skill)
-            .WithMany()
+            .WithMany(x => x.EmployeeSkills)
             .HasForeignKey(x => x.SkillId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Employee -> EmployeeCertifications
         builder.Entity<EmployeeCertification>()
             .HasOne(x => x.Employee)
-            .WithMany()
+            .WithMany(x => x.EmployeeCertifications)
             .HasForeignKey(x => x.EmployeeId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Certification -> EmployeeCertifications
         builder.Entity<EmployeeCertification>()
             .HasOne(x => x.Certification)
-            .WithMany()
+            .WithMany(x => x.EmployeeCertifications)
             .HasForeignKey(x => x.CertificationId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // EmployeeSkill Score
         builder.Entity<EmployeeSkill>()
-            .HasCheckConstraint("CK_EmployeeSkill_Score", "[Score] >= 0 AND [Score] <= 5");
+            .Property(x => x.Score)
+            .HasPrecision(5, 2);
+
+        builder.Entity<EmployeeSkill>()
+            .ToTable(t => t.HasCheckConstraint(
+                "CK_EmployeeSkill_Score",
+                "[Score] >= 0 AND [Score] <= 5"));
     }
 }

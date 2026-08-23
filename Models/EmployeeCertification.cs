@@ -1,16 +1,19 @@
-namespace SkillSync.Models;
-
-public class EmployeeCertification
+namespace SkillSync.Models
 {
-    public int Id { get; set; }
+    public class EmployeeCertification
+    {
+        public int EmployeeCertificationId { get; set; }
 
-    public string EmployeeId { get; set; } = string.Empty;
-    public ApplicationUser Employee { get; set; } = null!;
+        public int EmployeeId { get; set; }
 
-    public int CertificationId { get; set; }
-    public Certification Certification { get; set; } = null!;
+        public Employee Employee { get; set; } = null!;
 
-    public DateTime IssueDate { get; set; }
-    public DateTime? ExpiryDate { get; set; }
-    public string? CredentialId { get; set; }
+        public int CertificationId { get; set; }
+
+        public Certification Certification { get; set; } = null!;
+
+        public DateTime? IssueDate { get; set; }
+
+        public DateTime? ExpiryDate { get; set; }
+    }
 }

@@ -1,10 +1,16 @@
-namespace SkillSync.Models;
+using System.Collections.Generic;
 
-public class SkillCategory
+namespace SkillSync.Models
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
+    public class SkillCategory
+    {
+        public int Id { get; set; }
 
-    public ICollection<Skill> Skills { get; set; } = new List<Skill>();
+        public string Name { get; set; } = string.Empty;
+
+        public string? Description { get; set; }
+
+        public ICollection<Skill> Skills { get; set; }
+            = new List<Skill>();
+    }
 }

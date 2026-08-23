@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,13 +18,11 @@ public class TeamRadarController : ControllerBase
         _context = context;
     }
 
-    // Starter aggregation endpoint.
-    // Replace the employee/team relationship with Person 1 + 2's final schema.
     [HttpGet("employee/{employeeId}")]
     public async Task<IActionResult> GetEmployeeRadar(string employeeId)
     {
         var result = await _context.EmployeeSkills
-            .Where(x => x.EmployeeId == employeeId)
+            .Where(x => x.Employee.ApplicationUserId == employeeId)
             .Include(x => x.Skill)
             .GroupBy(x => x.Skill.Name)
             .Select(g => new
