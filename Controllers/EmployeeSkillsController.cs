@@ -1,15 +1,16 @@
-using System.Runtime.InteropServices;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SkillSync.Data;
 using SkillSync.Models;
+using SkillSync.DTOs;
 
 namespace SkillSync.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Resource Manager,HR Administrator,System Administrator")]
+[Authorize]
 public class EmployeeSkillsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -21,6 +22,7 @@ public class EmployeeSkillsController : ControllerBase
 
     // GET: api/EmployeeSkills
     [HttpGet]
+    [Authorize(Roles = "Resource Manager,HR Administrator,System Administrator")]
     public async Task<ActionResult<IEnumerable<EmployeeSkill>>> GetEmployeeSkills()
     {
         var employeeSkills = await _context.EmployeeSkills
@@ -33,6 +35,7 @@ public class EmployeeSkillsController : ControllerBase
 
     // GET: api/EmployeeSkills/5
     [HttpGet("{id}")]
+    [Authorize(Roles = "Resource Manager,HR Administrator,System Administrator")]
     public async Task<ActionResult<EmployeeSkill>> GetEmployeeSkill(int id)
     {
         var employeeSkill = await _context.EmployeeSkills
@@ -53,6 +56,7 @@ public class EmployeeSkillsController : ControllerBase
 
     // GET: api/EmployeeSkills/employee/5
     [HttpGet("employee/{employeeId}")]
+    [Authorize(Roles = "Resource Manager,HR Administrator,System Administrator")]
     public async Task<ActionResult<IEnumerable<EmployeeSkill>>> GetEmployeeSkillsByEmployee(
         int employeeId)
     {
@@ -78,6 +82,7 @@ public class EmployeeSkillsController : ControllerBase
 
     // GET: api/EmployeeSkills/skill/5
     [HttpGet("skill/{skillId}")]
+    [Authorize(Roles = "Resource Manager,HR Administrator,System Administrator")]
     public async Task<ActionResult<IEnumerable<EmployeeSkill>>> GetEmployeesBySkill(
         int skillId)
     {
@@ -103,6 +108,7 @@ public class EmployeeSkillsController : ControllerBase
 
     // POST: api/EmployeeSkills
     [HttpPost]
+    [Authorize(Roles = "HR Administrator,System Administrator")]
     public async Task<ActionResult<EmployeeSkill>> CreateEmployeeSkill(
         EmployeeSkill employeeSkill)
     {
@@ -149,6 +155,8 @@ public class EmployeeSkillsController : ControllerBase
             });
         }
 
+        employeeSkill.LastAssessedDate = DateTime.UtcNow;
+
         _context.EmployeeSkills.Add(employeeSkill);
 
         await _context.SaveChangesAsync();
@@ -166,6 +174,8 @@ public class EmployeeSkillsController : ControllerBase
 
     // PUT: api/EmployeeSkills/5
     [HttpPut("{id}")]
+    [Authorize(Roles = "HR Administrator,System Administrator")]
+
     public async Task<IActionResult> UpdateEmployeeSkill(
         int id,
         EmployeeSkill employeeSkill)
@@ -236,8 +246,7 @@ public class EmployeeSkillsController : ControllerBase
         existingEmployeeSkill.EmployeeId = employeeSkill.EmployeeId;
         existingEmployeeSkill.SkillId = employeeSkill.SkillId;
         existingEmployeeSkill.Score = employeeSkill.Score;
-        existingEmployeeSkill.LastAssessedDate =
-            employeeSkill.LastAssessedDate;
+        existingEmployeeSkill.LastAssessedDate = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -246,6 +255,7 @@ public class EmployeeSkillsController : ControllerBase
 
     // DELETE: api/EmployeeSkills/5
     [HttpDelete("{id}")]
+    [Authorize(Roles = "HR Administrator,System Administrator")]
     public async Task<IActionResult> DeleteEmployeeSkill(int id)
     {
         var employeeSkill = await _context.EmployeeSkills

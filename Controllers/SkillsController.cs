@@ -8,6 +8,7 @@ namespace SkillSync.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class SkillsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -15,6 +16,21 @@ public class SkillsController : ControllerBase
     public SkillsController(ApplicationDbContext context)
     {
         _context = context;
+    }
+
+    [HttpGet("categories")]
+    public async Task<IActionResult> GetCategories()
+    {
+        var categories = await _context.SkillCategories
+            .Select(c => new
+            {
+                c.Id,
+                c.Name,
+                c.Description
+            })
+            .ToListAsync();
+
+        return Ok(categories);
     }
 
     [HttpGet]
@@ -51,6 +67,7 @@ public class SkillsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "HR Administrator,System Administrator")]
     public async Task<IActionResult> CreateSkill(Skill skill)
     
     {
