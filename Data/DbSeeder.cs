@@ -23,6 +23,7 @@ public static class DbSeeder
 
         var context = provider.GetRequiredService<ApplicationDbContext>();
         var roleManager = provider.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
 
         await context.Database.MigrateAsync();
 
@@ -30,6 +31,46 @@ public static class DbSeeder
         {
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));
+        }
+
+        var testUsers = new[]
+{
+    new { Email = "employee@skillsync.com", Role = "Employee" },
+    new { Email = "pm@skillsync.com", Role = "Project Manager" },
+    new { Email = "resource@skillsync.com", Role = "Resource Manager" },
+    new { Email = "hr@skillsync.com", Role = "HR Administrator" },
+    new { Email = "finance@skillsync.com", Role = "Finance / Operations" },
+    new { Email = "admin@skillsync.com", Role = "System Administrator" }
+};
+
+        foreach (var testUser in testUsers)
+        {
+            var user = await userManager.FindByEmailAsync(testUser.Email);
+
+            if (user == null)
+            {
+                user = new ApplicationUser
+                {
+                    UserName = testUser.Email,
+                    Email = testUser.Email,
+                    EmailConfirmed = true,
+                    FullName = testUser.Role
+                };
+
+                var result = await userManager.CreateAsync(user, "SkillSync@123");
+
+                if (!result.Succeeded)
+                {
+                    throw new Exception(
+                        $"Failed to create {testUser.Email}: " +
+                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                }
+            }
+
+            if (!await userManager.IsInRoleAsync(user, testUser.Role))
+            {
+                await userManager.AddToRoleAsync(user, testUser.Role);
+            }
         }
 
         if (!await context.SkillCategories.AnyAsync())

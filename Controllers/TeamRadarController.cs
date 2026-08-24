@@ -18,6 +18,7 @@ public class TeamRadarController : ControllerBase
         _context = context;
     }
 
+    // TODO: Add team-level radar once Team -> Employee relationship is available from the database schema.
     [HttpGet("employee/{employeeId}")]
     public async Task<IActionResult> GetEmployeeRadar(string employeeId)
     {
