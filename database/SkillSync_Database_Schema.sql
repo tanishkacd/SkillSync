@@ -170,4 +170,137 @@ CREATE TABLE TimesheetEntry (
 CREATE INDEX IX_TimesheetEntry_Timesheet ON TimesheetEntry (TimesheetID);
  
  
-/* ---------------------------------------------------------------------------
+/*  ---------------------------------------------------------------------------
+   5. BILLING & AUDIT
+   --------------------------------------------------------------------------- */
+ 
+CREATE TABLE RateCard (
+    RateCardID       INT IDENTITY(1,1) PRIMARY KEY,
+    ProjectID          INT             NOT NULL REFERENCES Project(ProjectID),
+    BillingRatePerHour   DECIMAL(10,2)   NOT NULL,
+    EffectiveDate         DATE            NOT NULL
+);
+ 
+CREATE TABLE AuditLog (
+    AuditLogID     INT IDENTITY(1,1) PRIMARY KEY,
+    EntityName       NVARCHAR(50)    NOT NULL,   -- e.g. 'EmployeeSkill', 'Allocation'
+    EntityID           INT             NOT NULL,
+    ChangedField         NVARCHAR(100)   NOT NULL,
+    OldValue               NVARCHAR(200)   NULL,
+    NewValue                 NVARCHAR(200)   NULL,
+    ChangedBy                 INT             NOT NULL REFERENCES Employee(EmployeeID),
+    ChangedDate                 DATETIME2       NOT NULL DEFAULT SYSUTCDATETIME()
+);
+ 
+GO
+ 
+/* 6. REPORTING VIEWS  (Database Highlights: complex joins, aggregation) */
+ 
+/* 6.1 Team Skill Radar: average proficiency per department per skill */
+CREATE VIEW vw_TeamSkillRadar AS
+SELECT
+    d.DepartmentID,
+    d.Name                          AS DepartmentName,
+    s.SkillID,
+    s.Name                          AS SkillName,
+    sc.Name                         AS SkillCategory,
+    AVG(CAST(es.ProficiencyScore AS DECIMAL(4,2))) AS AvgProficiency,
+    COUNT(DISTINCT es.EmployeeID)   AS EmployeeCount
+FROM EmployeeSkill es
+JOIN Employee e        ON e.EmployeeID = es.EmployeeID AND e.IsActive = 1
+JOIN Department d      ON d.DepartmentID = e.DepartmentID
+JOIN Skill s            ON s.SkillID = es.SkillID
+JOIN SkillCategory sc   ON sc.SkillCategoryID = s.SkillCategoryID
+GROUP BY d.DepartmentID, d.Name, s.SkillID, s.Name, sc.Name;
+GO
+ 
+/* 6.2 Resource Availability: weekly capacity vs. locked allocations */
+CREATE VIEW vw_ResourceAvailability AS
+SELECT
+    e.EmployeeID,
+    e.FirstName + ' ' + e.LastName          AS EmployeeName,
+    e.DepartmentID,
+    e.WeeklyCapacityHours,
+    ISNULL(SUM(a.AllocationPercent), 0)      AS AllocatedPercent,
+    e.WeeklyCapacityHours
+        * (1 - ISNULL(SUM(a.AllocationPercent), 0) / 100.0)  AS AvailableHoursPerWeek,
+    CASE
+        WHEN ISNULL(SUM(a.AllocationPercent), 0) >= 100 THEN 0
+        ELSE 100 - ISNULL(SUM(a.AllocationPercent), 0)
+    END                                       AS AvailabilityPercent
+FROM Employee e
+LEFT JOIN Allocation a
+    ON a.EmployeeID = e.EmployeeID
+    AND a.Status = 'Locked'
+    AND GETDATE() BETWEEN a.StartDate AND ISNULL(a.EndDate, '9999-12-31')
+WHERE e.IsActive = 1
+GROUP BY e.EmployeeID, e.FirstName, e.LastName, e.DepartmentID, e.WeeklyCapacityHours;
+GO
+ 
+/* 6.3 Candidate Match: scores employees against a project's requirement
+           line — consumed by the C# Automated Team Builder engine */
+CREATE VIEW vw_CandidateMatch AS
+SELECT
+    pr.ProjectRequirementID,
+    pr.ProjectID,
+    es.EmployeeID,
+    pr.SkillID,
+    es.ProficiencyScore,
+    pr.MinProficiency,
+    es.YearsExperience,
+    pr.MinYearsExperience,
+    ra.AvailabilityPercent,
+    -- simple weighted match score: proficiency fit (50%), experience fit (20%), availability (30%)
+    CASE WHEN es.ProficiencyScore >= pr.MinProficiency
+              AND es.YearsExperience >= pr.MinYearsExperience
+         THEN
+            (CAST(es.ProficiencyScore AS DECIMAL(5,2)) / 5.0) * 50
+            + (CASE WHEN es.YearsExperience >= pr.MinYearsExperience * 2 THEN 20
+                    ELSE (es.YearsExperience / NULLIF(pr.MinYearsExperience, 0)) * 20 END)
+            + (ra.AvailabilityPercent / 100.0) * 30
+         ELSE 0
+    END                                       AS MatchScore
+FROM ProjectRequirement pr
+JOIN EmployeeSkill es       ON es.SkillID = pr.SkillID
+JOIN vw_ResourceAvailability ra ON ra.EmployeeID = es.EmployeeID
+WHERE ra.AvailabilityPercent > 0;
+GO
+ 
+/* 6.4 Project Profitability: billed revenue vs. actual cost  */
+CREATE VIEW vw_ProjectProfitability AS
+SELECT
+    p.ProjectID,
+    p.Name                                    AS ProjectName,
+    p.ClientName,
+    SUM(te.HoursWorked)                       AS ActualHours,
+    SUM(te.HoursWorked * ISNULL(rc.BillingRatePerHour, p.BillingRatePerHour)) AS BilledRevenue,
+    SUM(te.HoursWorked * e.CostRatePerHour)   AS ActualCost,
+    SUM(te.HoursWorked * ISNULL(rc.BillingRatePerHour, p.BillingRatePerHour))
+        - SUM(te.HoursWorked * e.CostRatePerHour)                            AS Profitability
+FROM Project p
+JOIN TimesheetEntry te   ON te.ProjectID = p.ProjectID
+JOIN Timesheet ts         ON ts.TimesheetID = te.TimesheetID AND ts.Status = 'Approved'
+JOIN Employee e            ON e.EmployeeID = ts.EmployeeID
+LEFT JOIN RateCard rc       ON rc.ProjectID = p.ProjectID
+                            AND rc.EffectiveDate = (
+                                SELECT MAX(rc2.EffectiveDate) FROM RateCard rc2
+                                WHERE rc2.ProjectID = p.ProjectID AND rc2.EffectiveDate <= te.EntryDate)
+GROUP BY p.ProjectID, p.Name, p.ClientName;
+GO
+ 
+/* 6.5 Milestone Progress: rollup of task completion per milestone */
+CREATE VIEW vw_MilestoneProgress AS
+SELECT
+    m.MilestoneID,
+    m.ProjectID,
+    m.Name                                     AS MilestoneName,
+    m.DueDate,
+    COUNT(t.TaskID)                             AS TotalTasks,
+    SUM(CASE WHEN t.Status = 'Completed' THEN 1 ELSE 0 END) AS CompletedTasks,
+    CAST(SUM(CASE WHEN t.Status = 'Completed' THEN 1 ELSE 0 END) AS DECIMAL(5,2))
+        / NULLIF(COUNT(t.TaskID), 0) * 100      AS PercentComplete
+FROM Milestone m
+LEFT JOIN Task t ON t.MilestoneID = m.MilestoneID
+GROUP BY m.MilestoneID, m.ProjectID, m.Name, m.DueDate;
+GO
+ 
