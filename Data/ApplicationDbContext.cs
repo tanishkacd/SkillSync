@@ -14,6 +14,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<SkillCategory> SkillCategories => Set<SkillCategory>();
     public DbSet<Skill> Skills => Set<Skill>();
     public DbSet<Employee> Employees => Set<Employee>();
+
+    public DbSet<Department> Departments => Set<Department>();
     public DbSet<EmployeeSkill> EmployeeSkills => Set<EmployeeSkill>();
     public DbSet<Certification> Certifications => Set<Certification>();
     public DbSet<EmployeeCertification> EmployeeCertifications => Set<EmployeeCertification>();
@@ -21,6 +23,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<Department>()
+       .ToTable("Department");
+
+        builder.Entity<Employee>()
+            .ToTable("Employee");
+
+        builder.Entity<Employee>()
+    .HasOne(e => e.Department)
+    .WithMany(d => d.Employees)
+    .HasForeignKey(e => e.DepartmentID)
+    .OnDelete(DeleteBehavior.Restrict);
 
         // SkillCategory -> Skills
         builder.Entity<SkillCategory>()

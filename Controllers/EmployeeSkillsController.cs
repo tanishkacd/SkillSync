@@ -1,10 +1,8 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SkillSync.Data;
 using SkillSync.Models;
-using SkillSync.DTOs;
 
 namespace SkillSync.Controllers;
 
@@ -106,6 +104,44 @@ public class EmployeeSkillsController : ControllerBase
         return Ok(employeeSkills);
     }
 
+    // GET: api/EmployeeSkills/department/5/radar
+    [HttpGet("department/{departmentId}/radar")]
+    [Authorize(Roles = "Resource Manager,HR Administrator,System Administrator")]
+    public async Task<IActionResult> GetDepartmentSkillRadar(int departmentId)
+    {
+        // Check whether the department exists
+        var departmentExists = await _context.Departments
+            .AnyAsync(d => d.DepartmentID == departmentId);
+
+        if (!departmentExists)
+        {
+            return NotFound(new
+            {
+                message = "Department not found."
+            });
+        }
+
+        // Get average score of each skill for employees
+        // belonging to the selected department
+        var radarData = await _context.EmployeeSkills
+            .Where(es => es.Employee.DepartmentID == departmentId)
+            .GroupBy(es => new
+            {
+                es.SkillId,
+                SkillName = es.Skill.Name
+            })
+            .Select(g => new
+            {
+                skillId = g.Key.SkillId,
+                skill = g.Key.SkillName,
+                averageScore = Math.Round(g.Average(es => es.Score), 2)
+            })
+            .OrderBy(x => x.skill)
+            .ToListAsync();
+
+        return Ok(radarData);
+    }
+
     // POST: api/EmployeeSkills
     [HttpPost]
     [Authorize(Roles = "HR Administrator,System Administrator")]
@@ -175,7 +211,6 @@ public class EmployeeSkillsController : ControllerBase
     // PUT: api/EmployeeSkills/5
     [HttpPut("{id}")]
     [Authorize(Roles = "HR Administrator,System Administrator")]
-
     public async Task<IActionResult> UpdateEmployeeSkill(
         int id,
         EmployeeSkill employeeSkill)
