@@ -1,0 +1,6 @@
+IF DB_ID('SkillSyncDB') IS NULL
+    CREATE DATABASE SkillSyncDB;
+GO
+
+USE SkillSyncDB;
+GO
