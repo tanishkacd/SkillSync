@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SkillRadarReports.Data;
+using SkillRadarReports.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Application Services
+builder.Services.AddScoped<IProjectRequirementService, ProjectRequirementService>();
+builder.Services.AddScoped<IAllocationService, AllocationService>();
 
 // EF Core - connection string comes from appsettings.json or env var ConnectionStrings__DefaultConnection
 builder.Services.AddDbContext<AppDbContext>(options =>
