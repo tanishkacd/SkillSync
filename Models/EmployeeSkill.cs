@@ -6,11 +6,11 @@ namespace SkillSync.Models
 
         public int EmployeeId { get; set; }
 
-        public Employee Employee { get; set; } = null!;
+        public Employee? Employee { get; set; } 
 
         public int SkillId { get; set; }
 
-        public Skill Skill { get; set; } = null!;
+        public Skill? Skill { get; set; } 
 
         public decimal Score { get; set; }
 

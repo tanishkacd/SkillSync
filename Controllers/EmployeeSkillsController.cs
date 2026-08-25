@@ -124,11 +124,12 @@ public class EmployeeSkillsController : ControllerBase
         // Get average score of each skill for employees
         // belonging to the selected department
         var radarData = await _context.EmployeeSkills
-            .Where(es => es.Employee.DepartmentID == departmentId)
+            .Where(es => es.Employee != null &&
+             es.Employee.DepartmentID == departmentId)
             .GroupBy(es => new
             {
                 es.SkillId,
-                SkillName = es.Skill.Name
+                SkillName = es.Skill != null ? es.Skill.Name : ""
             })
             .Select(g => new
             {

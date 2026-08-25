@@ -6,11 +6,11 @@ namespace SkillSync.Models
 
         public int EmployeeId { get; set; }
 
-        public Employee Employee { get; set; } = null!;
+        public Employee? Employee { get; set; } 
 
         public int CertificationId { get; set; }
 
-        public Certification Certification { get; set; } = null!;
+        public Certification? Certification { get; set; } 
 
         public DateTime? IssueDate { get; set; }
 

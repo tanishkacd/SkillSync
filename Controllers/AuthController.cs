@@ -1,8 +1,11 @@
-﻿
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SkillSync.Models;
 using SkillSync.DTOs;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace SkillSync.Controllers;
 
@@ -11,17 +14,10 @@ namespace SkillSync.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    
 
-    public AuthController(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
-        
+    public AuthController(UserManager<ApplicationUser> userManager)
     {
         _userManager = userManager;
-        _signInManager = signInManager;
-        
     }
 
     [HttpPost("login")]
@@ -32,31 +28,54 @@ public class AuthController : ControllerBase
         if (user == null)
             return Unauthorized("Invalid email or password.");
 
-        var result = await _signInManager.PasswordSignInAsync(
+        var passwordValid = await _userManager.CheckPasswordAsync(
             user,
-            request.Password,
-            isPersistent: false,
-            lockoutOnFailure: false);
+            request.Password);
 
-        if (!result.Succeeded)
+        if (!passwordValid)
             return Unauthorized("Invalid email or password.");
 
         var roles = await _userManager.GetRolesAsync(user);
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Email, user.Email!)
+        };
+
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes("SkillSyncSuperSecretKey123456789"));
+
+        var credentials = new SigningCredentials(
+            key,
+            SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(2),
+            signingCredentials: credentials);
+
+        var tokenString = new JwtSecurityTokenHandler()
+            .WriteToken(token);
 
         return Ok(new
         {
             Message = "Login successful",
             UserId = user.Id,
             Email = user.Email,
-            Roles = roles
+            Roles = roles,
+            Token = tokenString
         });
     }
 
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout()
+    public IActionResult Logout()
     {
-        await _signInManager.SignOutAsync();
-
         return Ok(new
         {
             Message = "Logout successful"
