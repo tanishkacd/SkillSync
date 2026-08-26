@@ -19,6 +19,9 @@ public class AppDbContext : DbContext
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectRequirement> ProjectRequirements => Set<ProjectRequirement>();
     public DbSet<Allocation> Allocations => Set<Allocation>();
+    public DbSet<TaskModel> Tasks => Set<TaskModel>();
+    public DbSet<Timesheet> Timesheets => Set<Timesheet>();
+    public DbSet<TimesheetEntry> TimesheetEntries => Set<TimesheetEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,6 +102,46 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.CreatedBy)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TaskModel>(entity =>
+        {
+            entity.ToTable("Task");
+            entity.HasKey(e => e.TaskID);
+            entity.HasOne(e => e.Milestone)
+                .WithMany()
+                .HasForeignKey(e => e.MilestoneID);
+        });
+
+        modelBuilder.Entity<Timesheet>(entity =>
+        {
+            entity.ToTable("Timesheet");
+            entity.HasKey(e => e.TimesheetID);
+            entity.HasIndex(e => new { e.EmployeeID, e.WeekStartDate }).IsUnique();
+            entity.HasOne(e => e.Employee)
+                .WithMany()
+                .HasForeignKey(e => e.EmployeeID);
+            entity.HasOne(e => e.Approver)
+                .WithMany()
+                .HasForeignKey(e => e.ApprovedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TimesheetEntry>(entity =>
+        {
+            entity.ToTable("TimesheetEntry");
+            entity.HasKey(e => e.TimesheetEntryID);
+            entity.Property(e => e.HoursWorked).HasPrecision(4, 2);
+            entity.HasOne(e => e.Timesheet)
+                .WithMany(t => t.Entries)
+                .HasForeignKey(e => e.TimesheetID);
+            entity.HasOne(e => e.Project)
+                .WithMany()
+                .HasForeignKey(e => e.ProjectID);
+            entity.HasOne(e => e.Task)
+                .WithMany()
+                .HasForeignKey(e => e.TaskID)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }
