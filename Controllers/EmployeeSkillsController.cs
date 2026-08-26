@@ -21,11 +21,23 @@ public class EmployeeSkillsController : ControllerBase
     // GET: api/EmployeeSkills
     [HttpGet]
     [Authorize(Roles = "Resource Manager,HR Administrator,System Administrator")]
-    public async Task<ActionResult<IEnumerable<EmployeeSkill>>> GetEmployeeSkills()
+    public async Task<IActionResult> GetEmployeeSkills()
     {
         var employeeSkills = await _context.EmployeeSkills
-            .Include(es => es.Employee)
-            .Include(es => es.Skill)
+            .Select(es => new
+            {
+                id = es.Id,
+                employeeId = es.EmployeeId,
+                skillId = es.SkillId,
+                score = es.Score,
+                lastAssessedDate = es.LastAssessedDate,
+                employeeName = es.Employee != null
+                    ? es.Employee.ApplicationUser.FullName
+                    : null,
+                skillName = es.Skill != null
+                    ? es.Skill.Name
+                    : null
+            })
             .ToListAsync();
 
         return Ok(employeeSkills);
@@ -198,15 +210,17 @@ public class EmployeeSkillsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        var createdEmployeeSkill = await _context.EmployeeSkills
-            .Include(es => es.Employee)
-            .Include(es => es.Skill)
-            .FirstAsync(es => es.Id == employeeSkill.Id);
-
         return CreatedAtAction(
-            nameof(GetEmployeeSkill),
-            new { id = employeeSkill.Id },
-            createdEmployeeSkill);
+     nameof(GetEmployeeSkill),
+     new { id = employeeSkill.Id },
+     new
+     {
+         id = employeeSkill.Id,
+         employeeId = employeeSkill.EmployeeId,
+         skillId = employeeSkill.SkillId,
+         score = employeeSkill.Score,
+         lastAssessedDate = employeeSkill.LastAssessedDate
+     });
     }
 
     // PUT: api/EmployeeSkills/5

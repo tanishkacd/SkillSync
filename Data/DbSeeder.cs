@@ -27,21 +27,29 @@ public static class DbSeeder
 
         await context.Database.MigrateAsync();
 
+        // =========================
+        // ROLES
+        // =========================
+
         foreach (var role in Roles)
         {
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));
         }
 
+        // =========================
+        // TEST USERS
+        // =========================
+
         var testUsers = new[]
-{
-    new { Email = "employee@skillsync.com", Role = "Employee" },
-    new { Email = "pm@skillsync.com", Role = "Project Manager" },
-    new { Email = "resource@skillsync.com", Role = "Resource Manager" },
-    new { Email = "hr@skillsync.com", Role = "HR Administrator" },
-    new { Email = "finance@skillsync.com", Role = "Finance / Operations" },
-    new { Email = "admin@skillsync.com", Role = "System Administrator" }
-};
+        {
+            new { Email = "employee@skillsync.com", Role = "Employee" },
+            new { Email = "pm@skillsync.com", Role = "Project Manager" },
+            new { Email = "resource@skillsync.com", Role = "Resource Manager" },
+            new { Email = "hr@skillsync.com", Role = "HR Administrator" },
+            new { Email = "finance@skillsync.com", Role = "Finance / Operations" },
+            new { Email = "admin@skillsync.com", Role = "System Administrator" }
+        };
 
         foreach (var testUser in testUsers)
         {
@@ -57,13 +65,16 @@ public static class DbSeeder
                     FullName = testUser.Role
                 };
 
-                var result = await userManager.CreateAsync(user, "SkillSync@123");
+                var result = await userManager.CreateAsync(
+                    user,
+                    "SkillSync@123");
 
                 if (!result.Succeeded)
                 {
                     throw new Exception(
                         $"Failed to create {testUser.Email}: " +
-                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                        string.Join(", ",
+                            result.Errors.Select(e => e.Description)));
                 }
             }
 
@@ -72,6 +83,54 @@ public static class DbSeeder
                 await userManager.AddToRoleAsync(user, testUser.Role);
             }
         }
+
+        // =========================
+        // DEMO DEPARTMENT
+        // =========================
+
+        var department = await context.Departments
+            .FirstOrDefaultAsync(d => d.Name == "Technology");
+
+        if (department == null)
+        {
+            department = new Department
+            {
+                Name = "Technology",
+                IsActive = true
+            };
+
+            context.Departments.Add(department);
+            await context.SaveChangesAsync();
+        }
+
+        // =========================
+        // DEMO EMPLOYEE
+        // =========================
+
+        var employeeUser = await userManager
+            .FindByEmailAsync("employee@skillsync.com");
+
+        if (employeeUser != null)
+        {
+            var employeeExists = await context.Employees
+                .AnyAsync(e => e.ApplicationUserId == employeeUser.Id);
+
+            if (!employeeExists)
+            {
+                var employee = new Employee
+                {
+                    ApplicationUserId = employeeUser.Id,
+                    DepartmentID = department.DepartmentID
+                };
+
+                context.Employees.Add(employee);
+                await context.SaveChangesAsync();
+            }
+        }
+
+        // =========================
+        // SKILL CATEGORIES + SKILLS
+        // =========================
 
         if (!await context.SkillCategories.AnyAsync())
         {
@@ -93,17 +152,49 @@ public static class DbSeeder
                 Description = "Database technologies"
             };
 
-            context.SkillCategories.AddRange(programming, cloud, database);
+            context.SkillCategories.AddRange(
+                programming,
+                cloud,
+                database);
+
             await context.SaveChangesAsync();
 
             context.Skills.AddRange(
-                new Skill { Name = "C#", SkillCategoryId = programming.Id },
-                new Skill { Name = "Java", SkillCategoryId = programming.Id },
-                new Skill { Name = "Python", SkillCategoryId = programming.Id },
-                new Skill { Name = "AWS", SkillCategoryId = cloud.Id },
-                new Skill { Name = "Azure", SkillCategoryId = cloud.Id },
-                new Skill { Name = "SQL Server", SkillCategoryId = database.Id },
-                new Skill { Name = "MySQL", SkillCategoryId = database.Id }
+                new Skill
+                {
+                    Name = "C#",
+                    SkillCategoryId = programming.Id
+                },
+                new Skill
+                {
+                    Name = "Java",
+                    SkillCategoryId = programming.Id
+                },
+                new Skill
+                {
+                    Name = "Python",
+                    SkillCategoryId = programming.Id
+                },
+                new Skill
+                {
+                    Name = "AWS",
+                    SkillCategoryId = cloud.Id
+                },
+                new Skill
+                {
+                    Name = "Azure",
+                    SkillCategoryId = cloud.Id
+                },
+                new Skill
+                {
+                    Name = "SQL Server",
+                    SkillCategoryId = database.Id
+                },
+                new Skill
+                {
+                    Name = "MySQL",
+                    SkillCategoryId = database.Id
+                }
             );
 
             await context.SaveChangesAsync();
