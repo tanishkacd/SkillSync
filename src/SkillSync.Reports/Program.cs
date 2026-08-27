@@ -12,6 +12,7 @@ builder.Services.AddSwaggerGen();
 // Application Services
 builder.Services.AddScoped<IProjectRequirementService, ProjectRequirementService>();
 builder.Services.AddScoped<IAllocationService, AllocationService>();
+builder.Services.AddScoped<ITimesheetService, TimesheetService>();
 
 // EF Core - connection string comes from appsettings.json or env var ConnectionStrings__DefaultConnection
 builder.Services.AddDbContext<AppDbContext>(options =>
