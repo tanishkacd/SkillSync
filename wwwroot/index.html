@@ -1,181 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SkillSync</title>
-<style>
-  :root {
-    --bg: #0f172a;
-    --card: #111827;
-    --accent: #22d3ee;
-    --accent2: #6366f1;
-    --text: #e5e7eb;
-    --muted: #94a3b8;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: radial-gradient(circle at 20% 20%, #1e293b, var(--bg) 60%);
-    color: var(--text);
-    min-height: 100vh;
-  }
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 24px 48px;
-  }
-  .logo {
-    font-size: 1.4rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-  }
-  .logo span { color: var(--accent); }
-  nav a {
-    color: var(--muted);
-    text-decoration: none;
-    margin-left: 28px;
-    font-size: 0.95rem;
-  }
-  nav a:hover { color: var(--text); }
-  .hero {
-    text-align: center;
-    padding: 80px 24px 60px;
-  }
-  .hero h1 {
-    font-size: 2.6rem;
-    margin-bottom: 12px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .hero p {
-    color: var(--muted);
-    max-width: 640px;
-    margin: 0 auto 32px;
-    font-size: 1.05rem;
-    line-height: 1.6;
-  }
-  .cta {
-    display: inline-flex;
-    gap: 16px;
-  }
-  .btn {
-    padding: 12px 26px;
-    border-radius: 8px;
-    font-weight: 600;
-    text-decoration: none;
-    font-size: 0.95rem;
-    transition: transform 0.15s ease;
-  }
-  .btn:hover { transform: translateY(-2px); }
-  .btn-primary {
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    color: #0f172a;
-  }
-  .btn-secondary {
-    border: 1px solid #334155;
-    color: var(--text);
-  }
-  .features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 48px 80px;
-  }
-  .card {
-    background: var(--card);
-    border: 1px solid #1f2937;
-    border-radius: 14px;
-    padding: 24px;
-  }
-  .card h3 {
-    margin-top: 0;
-    font-size: 1.1rem;
-    color: var(--accent);
-  }
-  .card p {
-    color: var(--muted);
-    font-size: 0.92rem;
-    line-height: 1.5;
-    margin-bottom: 0;
-  }
-  .status {
-    text-align: center;
-    padding: 20px;
-    font-size: 0.85rem;
-    color: var(--muted);
-  }
-  .dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #22c55e;
-    margin-right: 6px;
-  }
-  footer {
-    text-align: center;
-    padding: 24px;
-    color: #475569;
-    font-size: 0.8rem;
-    border-top: 1px solid #1f2937;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSync</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-<header>
-  <div class="logo">Skill<span>Sync</span></div>
-  <nav>
-    <a href="/swagger">API Docs</a>
-    <a href="https://github.com/tanishkacd/SkillSync" target="_blank">GitHub</a>
-  </nav>
-</header>
-
-<section class="hero">
-  <h1>Smart Employee Skill Matrix &amp; Project Allocation Engine</h1>
-  <p>
-    SkillSync replaces manual, spreadsheet-driven resourcing with a data-driven
-    engine — helping Project Managers build the right team, giving Resource
-    Managers visibility into skill gaps, and giving Finance real-time insight
-    into utilization and profitability.
-  </p>
-  <div class="cta">
-    <a href="/swagger" class="btn btn-primary">Explore API</a>
-    <a href="https://github.com/tanishkacd/SkillSync" class="btn btn-secondary" target="_blank">View Source</a>
-  </div>
-</section>
-
-<section class="features">
-  <div class="card">
-    <h3>Skill Gap &amp; Radar Profiling</h3>
-    <p>Visualize individual and team competency levels on a 0–5 scale to spot skill gaps and plan training.</p>
-  </div>
-  <div class="card">
-    <h3>Automated Team Builder</h3>
-    <p>Enter a project's required skills and headcount — get a ranked list of the best-fit, currently available employees.</p>
-  </div>
-  <div class="card">
-    <h3>Timesheet &amp; Progress Tracking</h3>
-    <p>Employees log weekly hours and task status; PMs approve and track milestone progress in real time.</p>
-  </div>
-  <div class="card">
-    <h3>Availability &amp; Profitability Reporting</h3>
-    <p>Live views into resource utilization and project profitability, exportable to Excel or PDF.</p>
-  </div>
-</section>
-
-<div class="status"><span class="dot"></span>API running</div>
-
-<footer>
-  SkillSync &middot; Internal HR Technology Initiative &middot; Group 8
-</footer>
-
+    <nav class="navbar">
+        <div class="logo">SkillSync</div>
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="/swagger">API</a>
+            <a href="#">About</a>
+            <button class="login-btn" onclick="showLogin()">Login</button>
+        </div>
+    </nav>
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Welcome to <span>SkillSync</span></h1>
+            <p>
+                Empowering organizations to manage employee skills,
+                certifications and project resources efficiently.
+            </p>
+            <div class="buttons">
+                <button class="primary-btn">Get Started</button>
+                <a href="/swagger" class="secondary-btn">Explore API</a>
+            </div>
+        </div>
+    </section>
+    <section class="features">
+        <h2>What SkillSync Offers</h2>
+        <div class="feature-container">
+            <div class="feature-card">
+                <h3>🎯 Skill Management</h3>
+                <p>
+                    Track employee skills and skill proficiency levels.
+                </p>
+            </div>
+            <div class="feature-card">
+                <h3>🏆 Certifications</h3>
+                <p>
+                    Manage employee certifications and professional achievements.
+                </p>
+            </div>
+            <div class="feature-card">
+                <h3>👥 Team Building</h3>
+                <p>
+                    Find the right employees for projects based on their skills.
+                </p>
+            </div>
+            <div class="feature-card">
+                <h3>📊 Reports</h3>
+                <p>
+                    Generate useful reports and monitor project progress.
+                </p>
+            </div>
+        </div>
+    </section>
+    <footer>
+        <p>© 2026 SkillSync. All rights reserved.</p>
+    </footer>
+    <script>
+        function showLogin() {
+            const email = prompt("Enter your email:");
+            const password = prompt("Enter your password:");
+            if (!email || !password) {
+                alert("Please enter email and password.");
+                return;
+            }
+            fetch("/api/Auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Login failed");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.token) {
+                    localStorage.setItem("jwtToken", data.token);
+                    alert("Login successful!");
+                    window.location.href = "/";
+                } else {
+                    alert("Login response received, but token was not found.");
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Login failed. Please check your email and password.");
+            });
+        }
+    </script>
 </body>
 </html>
